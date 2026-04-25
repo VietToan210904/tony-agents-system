@@ -330,6 +330,7 @@ function Projects() {
   };
 
   const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     const slider = sliderRef.current;
     if (!slider) return;
     dragRef.current = {
@@ -342,6 +343,7 @@ function Projects() {
   };
 
   const drag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     const slider = sliderRef.current;
     if (!slider || !dragRef.current.isDragging) return;
     const distance = event.clientX - dragRef.current.startX;
@@ -349,6 +351,7 @@ function Projects() {
   };
 
   const stopDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch" && !dragRef.current.isDragging) return;
     const slider = sliderRef.current;
     if (!slider) return;
     dragRef.current.isDragging = false;
