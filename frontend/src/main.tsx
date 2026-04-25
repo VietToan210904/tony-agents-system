@@ -1,15 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
-import {
-  BriefcaseBusiness,
-  ChevronDown,
-  Code,
-  Copy,
-  ExternalLink,
-  Menu,
-  Palette,
-  X
-} from "lucide-react";
+import { BriefcaseBusiness, Code, Copy, ExternalLink, Menu, Palette, X } from "lucide-react";
 import "./styles.css";
 
 const navItems = [
@@ -33,6 +24,7 @@ const projects = [
     tech: "YOLOv8m, DeepSORT, CNNs, UNet, OpenCV, PyTorch, CUDA, CVAT and Roboflow.",
     description:
       "Real-time ADAS system for NSW driving scenarios, detecting brake lights, turn indicators, lanes, and potential hazards with stabilised inference.",
+    image: "/project-adas.jpg",
     tone: "from-[#5b241c] via-[#b5342d] to-[#f7d046]"
   },
   {
@@ -42,6 +34,7 @@ const projects = [
     tech: "Python, NLTK, TF-IDF, Bag-of-Words, Logistic Regression, Naive Bayes and Neural Networks.",
     description:
       "Compared traditional machine learning and deep learning models on 50,000+ IMDB reviews with evaluation through ROC curves and confusion matrices.",
+    image: "/project-imdb.jpg",
     tone: "from-[#314229] via-[#7e955d] to-[#f0dcab]"
   },
   {
@@ -51,6 +44,7 @@ const projects = [
     tech: "TensorFlow, PyTorch, video preprocessing, feature extraction and deep learning models.",
     description:
       "Implemented models for detecting and classifying human actions from video data, targeting applications in surveillance, healthcare, and smart environments.",
+    image: "/project-activity.webp",
     tone: "from-[#4d3f2b] via-[#c89a2f] to-[#fff1a3]"
   },
   {
@@ -60,6 +54,7 @@ const projects = [
     tech: "Python, data mining, feature analysis, classification models and performance evaluation.",
     description:
       "Predicted whether NBA rookies would remain in the league for five years using player attributes and performance data.",
+    image: "/project-nba.webp",
     tone: "from-[#2f4936] via-[#6e8b61] to-[#d7ddcd]"
   },
   {
@@ -69,6 +64,7 @@ const projects = [
     tech: "Firebase, Java backend, HTML, CSS, API integration and project coordination.",
     description:
       "Led a programming team to build a digital library platform providing textbook access for children in disadvantaged areas.",
+    image: "/project-library.jpg",
     tone: "from-[#5b241c] via-[#7e955d] to-[#f3ead6]"
   }
 ];
@@ -92,19 +88,11 @@ const experienceTimeline = [
   }
 ];
 
-const services = [
-  {
-    icon: Code,
-    title: "Developer",
-    description: "Website creation with HTML, CSS, JavaScript. Professional websites with TypeScript, React, Node JS, and lots of creativity.",
-    skills: ["HTML", "CSS", "JavaScript", "React", "TypeScript", "Node Js", "Next Js", "PHP", "GitHub"]
-  },
-  {
-    icon: Palette,
-    title: "Design",
-    description: "Web designer with Figma and Sketch, creating motion designs with After Effects, creativity and design at its best.",
-    skills: ["Figma", "Adobe XD", "Photoshop", "Illustrator", "Sketch", "3D Modeling", "After Effects"]
-  }
+const skillRows = [
+  ["Python", "Java", "HTML/CSS", "Firebase", "React", "TypeScript", "FastAPI", "GitHub"],
+  ["TensorFlow", "PyTorch", "Machine Learning", "Deep Learning", "Computer Vision", "LLMs", "RAG", "AI Agents"],
+  ["YOLOv8", "DeepSORT", "UNet", "OpenCV", "CUDA", "Roboflow", "CVAT", "Data Annotation"],
+  ["Post-Processing", "Models & Algorithms", "Microsoft Excel", "Project Management", "Team Collaboration", "Problem Solving", "Communication"]
 ];
 
 function useActiveSection() {
@@ -168,7 +156,8 @@ function useRevealOnScroll() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add("is-visible");
-            observer.unobserve(entry.target);
+          } else {
+            entry.target.classList.remove("is-visible");
           }
         });
       },
@@ -313,7 +302,60 @@ function About() {
 
 function Projects() {
   const [index, setIndex] = useState(0);
-  const project = projects[index];
+  const [previousIndex, setPreviousIndex] = useState(0);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right">("left");
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ isDragging: false, startX: 0, scrollLeft: 0 });
+
+  const setActiveProject = (nextIndex: number) => {
+    setIndex((currentIndex) => {
+      if (nextIndex === currentIndex) return currentIndex;
+      setPreviousIndex(currentIndex);
+      setSlideDirection(nextIndex > currentIndex ? "left" : "right");
+      return nextIndex;
+    });
+  };
+
+  const scrollToProject = (projectIndex: number) => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    slider.scrollTo({ left: projectIndex * slider.clientWidth, behavior: "smooth" });
+    setActiveProject(projectIndex);
+  };
+
+  const updateActiveProject = () => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    setActiveProject(Math.round(slider.scrollLeft / slider.clientWidth));
+  };
+
+  const startDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    dragRef.current = {
+      isDragging: true,
+      startX: event.clientX,
+      scrollLeft: slider.scrollLeft
+    };
+    slider.setPointerCapture(event.pointerId);
+    slider.classList.add("is-dragging");
+  };
+
+  const drag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current;
+    if (!slider || !dragRef.current.isDragging) return;
+    const distance = event.clientX - dragRef.current.startX;
+    slider.scrollLeft = dragRef.current.scrollLeft - distance;
+  };
+
+  const stopDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current;
+    if (!slider) return;
+    dragRef.current.isDragging = false;
+    slider.classList.remove("is-dragging");
+    if (slider.hasPointerCapture(event.pointerId)) slider.releasePointerCapture(event.pointerId);
+    updateActiveProject();
+  };
 
   return (
     <section className="projects section" id="projects">
@@ -324,34 +366,51 @@ function Projects() {
           <span>Projects</span>
         </h2>
 
-        <div className="projects__shell">
-          <button className="projects__arrow" onClick={() => setIndex((value) => (value - 1 + projects.length) % projects.length)} aria-label="Previous project">
-            Prev
-          </button>
+        <div
+          className="projects__shell"
+          data-reveal="zoom"
+          ref={sliderRef}
+          onScroll={updateActiveProject}
+          onPointerDown={startDrag}
+          onPointerMove={drag}
+          onPointerUp={stopDrag}
+          onPointerCancel={stopDrag}
+          onPointerLeave={(event) => {
+            if (dragRef.current.isDragging) stopDrag(event);
+          }}
+        >
+          <div className="projects__track">
+            {projects.map((project, projectIndex) => {
+              const stateClass =
+                projectIndex === index
+                  ? `is-active throw-in-${slideDirection}`
+                  : projectIndex === previousIndex
+                    ? `throw-out-${slideDirection}`
+                    : "";
 
-          <article className="projects__card" key={project.number} data-reveal="zoom">
-            <div className={`projects__visual bg-gradient-to-br ${project.tone}`}>
-              <span>{project.category}</span>
-            </div>
+              return (
+              <article className={`projects__card ${stateClass}`} key={project.number}>
+                <div className={`projects__visual bg-gradient-to-br ${project.tone}`} style={project.image ? { backgroundImage: `url(${project.image})` } : undefined}>
+                  <span>{project.category}</span>
+                </div>
 
-            <div className="projects__content">
-              <div className="projects__number">{project.number}</div>
-              <p className="projects__category">{project.category}</p>
-              <h3>{project.title}</h3>
-              <p className="projects__description">{project.description}</p>
-              <p className="projects__subtitle">Technologies used</p>
-              <p>{project.tech}</p>
-            </div>
-          </article>
-
-          <button className="projects__arrow" onClick={() => setIndex((value) => (value + 1) % projects.length)} aria-label="Next project">
-            Next
-          </button>
+                <div className="projects__content">
+                  <div className="projects__number">{project.number}</div>
+                  <p className="projects__category">{project.category}</p>
+                  <h3>{project.title}</h3>
+                  <p className="projects__description">{project.description}</p>
+                  <p className="projects__subtitle">Technologies used</p>
+                  <p>{project.tech}</p>
+                </div>
+              </article>
+              );
+            })}
+          </div>
         </div>
 
         <div className="projects__dots" aria-label="Project navigation">
           {projects.map((item, itemIndex) => (
-            <button key={item.number} className={itemIndex === index ? "active-dot" : ""} onClick={() => setIndex(itemIndex)} aria-label={`Show project ${item.number}`} />
+              <button key={item.number} className={itemIndex === index ? "active-dot" : ""} onClick={() => scrollToProject(itemIndex)} aria-label={`Show project ${item.number}`} />
           ))}
         </div>
       </div>
@@ -366,7 +425,7 @@ function Work() {
         <h2 className="section__title" data-reveal="up">
           <span>My Work</span>
           <br />
-          Timeline
+          Experience
         </h2>
 
         <div className="timeline">
@@ -395,34 +454,36 @@ function Work() {
 }
 
 function Services() {
-  const [open, setOpen] = useState(0);
-
   return (
     <section className="services section">
       <div className="container">
         <h2 className="section__title" data-reveal="up">
-          What I <span>Offer</span>
+          Skills I <span>Work With</span>
         </h2>
 
-        <div className="services__grid">
-          {services.map(({ icon: Icon, title, description, skills }, index) => (
-            <article className={`services__card ${open === index ? "is-open" : ""}`} key={title} data-reveal="up">
-              <button onClick={() => setOpen(open === index ? -1 : index)}>
-                <Icon />
-                <span>{title}</span>
-                <ChevronDown className="services__chevron" />
-              </button>
-              <div className="services__body">
-                <p>{description}</p>
-                <h3>Skills &amp; Tools</h3>
-                <div>
-                  {skills.map((skill) => (
-                    <span key={skill}>{skill}</span>
+        <div className="skills-showcase" data-reveal="up">
+          <div className="skills-showcase__intro">
+            <div>
+              <Code />
+              <span>AI Engineering</span>
+            </div>
+            <div>
+              <Palette />
+              <span>Data, Vision & Research</span>
+            </div>
+          </div>
+
+          <div className="skills-marquee" aria-label="Technical skills">
+            {skillRows.map((row, rowIndex) => (
+              <div className={`skills-marquee__row ${rowIndex % 2 ? "reverse" : ""}`} key={row.join("-")}>
+                <div className="skills-marquee__track">
+                  {[...row, ...row].map((skill, skillIndex) => (
+                    <span key={`${skill}-${skillIndex}`}>{skill}</span>
                   ))}
                 </div>
               </div>
-            </article>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </section>
