@@ -24,7 +24,7 @@ def init_database() -> None:
                 """
                 select atttypmod
                 from pg_attribute
-                where attrelid = 'rag_chunks'::regclass
+                where attrelid = to_regclass('rag_chunks')
                   and attname = 'embedding'
                   and not attisdropped
                 """
