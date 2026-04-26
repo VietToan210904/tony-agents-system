@@ -103,7 +103,7 @@ jobs:
             --image "${BACKEND_IMAGE}" \
             --region "${REGION}" \
             --service-account "${RUNTIME_SERVICE_ACCOUNT}" \
-            --add-cloudsql-instances "${CLOUD_SQL_INSTANCE}" \
+            --set-cloudsql-instances "${CLOUD_SQL_INSTANCE}" \
             --memory 1Gi \
             --cpu 1 \
             --task-timeout 600 \
