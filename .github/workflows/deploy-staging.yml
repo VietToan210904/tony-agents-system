@@ -1,0 +1,127 @@
+name: Deploy staging to GCP
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION || 'australia-southeast1' }}
+  AR_REPOSITORY: ${{ vars.GCP_AR_REPOSITORY || 'portfolio-repo' }}
+  BACKEND_SERVICE: ${{ vars.GCP_BACKEND_SERVICE || 'portfolio-backend-staging' }}
+  FRONTEND_SERVICE: ${{ vars.GCP_FRONTEND_SERVICE || 'portfolio-frontend-staging' }}
+  INGEST_JOB: ${{ vars.GCP_INGEST_JOB || 'portfolio-rag-ingest-staging' }}
+  RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
+  CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push backend image
+        run: |
+          BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/${BACKEND_SERVICE}:${GITHUB_SHA}"
+          docker build -t "${BACKEND_IMAGE}" backend
+          docker push "${BACKEND_IMAGE}"
+          echo "BACKEND_IMAGE=${BACKEND_IMAGE}" >> "$GITHUB_ENV"
+
+      - name: Deploy backend
+        run: |
+          gcloud run deploy "${BACKEND_SERVICE}" \
+            --image "${BACKEND_IMAGE}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account "${RUNTIME_SERVICE_ACCOUNT}" \
+            --add-cloudsql-instances "${CLOUD_SQL_INSTANCE}" \
+            --memory 1Gi \
+            --cpu 1 \
+            --timeout 300 \
+            --min-instances 0 \
+            --update-secrets DATABASE_URL=portfolio-database-url:latest,OPENAI_API_KEY=portfolio-openai-api-key:latest,ADMIN_TOKEN=portfolio-admin-token:latest \
+            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false,CORS_ALLOW_ORIGINS=http://localhost:5173 \
+            --quiet
+
+          BACKEND_URL="$(gcloud run services describe "${BACKEND_SERVICE}" --region "${REGION}" --format='value(status.url)')"
+          echo "BACKEND_URL=${BACKEND_URL}" >> "$GITHUB_ENV"
+
+      - name: Build and push frontend image
+        run: |
+          FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/${FRONTEND_SERVICE}:${GITHUB_SHA}"
+          docker build --build-arg VITE_API_BASE_URL="${BACKEND_URL}" -t "${FRONTEND_IMAGE}" frontend
+          docker push "${FRONTEND_IMAGE}"
+          echo "FRONTEND_IMAGE=${FRONTEND_IMAGE}" >> "$GITHUB_ENV"
+
+      - name: Deploy frontend
+        run: |
+          gcloud run deploy "${FRONTEND_SERVICE}" \
+            --image "${FRONTEND_IMAGE}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --timeout 60 \
+            --min-instances 0 \
+            --quiet
+
+          FRONTEND_URL="$(gcloud run services describe "${FRONTEND_SERVICE}" --region "${REGION}" --format='value(status.url)')"
+          echo "FRONTEND_URL=${FRONTEND_URL}" >> "$GITHUB_ENV"
+
+      - name: Update backend CORS for frontend URL
+        run: |
+          gcloud run services update "${BACKEND_SERVICE}" \
+            --region "${REGION}" \
+            --update-env-vars CORS_ALLOW_ORIGINS="${FRONTEND_URL}" \
+            --quiet
+
+      - name: Deploy RAG ingestion job
+        run: |
+          gcloud run jobs deploy "${INGEST_JOB}" \
+            --image "${BACKEND_IMAGE}" \
+            --region "${REGION}" \
+            --service-account "${RUNTIME_SERVICE_ACCOUNT}" \
+            --add-cloudsql-instances "${CLOUD_SQL_INSTANCE}" \
+            --memory 1Gi \
+            --cpu 1 \
+            --task-timeout 600 \
+            --command python \
+            --args scripts/ingest_rag.py \
+            --update-secrets DATABASE_URL=portfolio-database-url:latest,OPENAI_API_KEY=portfolio-openai-api-key:latest,ADMIN_TOKEN=portfolio-admin-token:latest \
+            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false \
+            --quiet
+
+          gcloud run jobs execute "${INGEST_JOB}" --region "${REGION}" --wait
+
+      - name: Smoke test backend
+        run: |
+          curl --fail "${BACKEND_URL}/api/health"
+          curl --fail -X POST "${BACKEND_URL}/api/chat" \
+            -H "Content-Type: application/json" \
+            -d '{"message":"What AI experience does Tony have?"}'
+
+      - name: Print URLs
+        run: |
+          echo "Frontend: ${FRONTEND_URL}"
+          echo "Backend: ${BACKEND_URL}"

@@ -1259,6 +1259,248 @@ button {
   font-weight: 800;
 }
 
+.assistant {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 140;
+}
+
+.assistant__toggle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 3.45rem;
+  height: 3.45rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--flag-red), #f7d046);
+  color: #fff8ea;
+  box-shadow: 0 1.1rem 2.6rem rgba(91, 36, 28, .28);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.assistant__toggle:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 1.4rem 3rem rgba(91, 36, 28, .34);
+}
+
+.assistant__toggle svg {
+  width: 1.35rem;
+}
+
+.assistant__panel {
+  position: absolute;
+  right: 0;
+  bottom: 4.3rem;
+  display: grid;
+  grid-template-rows: auto minmax(13rem, 1fr) auto auto;
+  width: min(24rem, calc(100vw - 2rem));
+  max-height: min(42rem, calc(100vh - 7rem));
+  overflow: hidden;
+  border: 1px solid rgba(91, 36, 28, .16);
+  border-radius: .75rem;
+  background: rgba(255, 248, 234, .94);
+  box-shadow: 0 1.7rem 4.5rem rgba(91, 36, 28, .22);
+  opacity: 0;
+  transform: translateY(18px) scale(.96);
+  transform-origin: bottom right;
+  pointer-events: none;
+  transition: opacity .25s ease, transform .25s ease;
+  backdrop-filter: blur(18px);
+}
+
+.assistant.is-open .assistant__panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.assistant__header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(91, 36, 28, .12);
+  background:
+    radial-gradient(circle at 15% 0%, rgba(247, 208, 70, .32), transparent 9rem),
+    linear-gradient(135deg, rgba(181, 52, 45, .12), rgba(255, 248, 234, .82));
+  padding: 1rem;
+}
+
+.assistant__header h2 {
+  margin-top: .35rem;
+  font-size: 1.15rem;
+}
+
+.assistant__header button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: .35rem;
+  background: rgba(91, 36, 28, .08);
+  color: var(--title-color);
+}
+
+.assistant__header button svg {
+  width: 1rem;
+}
+
+.assistant__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  color: var(--flag-red-deep);
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.assistant__badge svg {
+  width: .95rem;
+}
+
+.assistant__messages {
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+  overflow-y: auto;
+  padding: 1rem;
+  scroll-behavior: smooth;
+}
+
+.assistant__message {
+  width: fit-content;
+  max-width: 86%;
+  border-radius: .7rem;
+  padding: .72rem .85rem;
+  font-size: .88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  animation: assistant-message-in .24s ease both;
+}
+
+.assistant__message--assistant {
+  align-self: flex-start;
+  border: 1px solid rgba(91, 36, 28, .1);
+  background: #fff8ea;
+  color: var(--text-color);
+}
+
+.assistant__message--user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--flag-red), #d69f18);
+  color: #fff8ea;
+  font-weight: 700;
+}
+
+.assistant__message--loading {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--flag-red-deep);
+  font-weight: 800;
+}
+
+.assistant__message--loading svg {
+  width: 1rem;
+  animation: assistant-spin .8s linear infinite;
+}
+
+.assistant__suggestions {
+  display: flex;
+  gap: .45rem;
+  overflow-x: auto;
+  border-top: 1px solid rgba(91, 36, 28, .08);
+  padding: .75rem 1rem;
+  scrollbar-width: none;
+}
+
+.assistant__suggestions::-webkit-scrollbar {
+  display: none;
+}
+
+.assistant__suggestions button {
+  flex: 0 0 auto;
+  border: 1px solid rgba(91, 36, 28, .12);
+  border-radius: 999px;
+  background: rgba(247, 208, 70, .16);
+  padding: .45rem .65rem;
+  color: var(--flag-red-dark);
+  font-size: .72rem;
+  font-weight: 800;
+  transition: background .2s ease, transform .2s ease;
+}
+
+.assistant__suggestions button:hover {
+  background: rgba(247, 208, 70, .28);
+  transform: translateY(-2px);
+}
+
+.assistant__form {
+  display: grid;
+  grid-template-columns: 1fr 2.6rem;
+  gap: .55rem;
+  border-top: 1px solid rgba(91, 36, 28, .12);
+  padding: .85rem;
+}
+
+.assistant__form input {
+  min-width: 0;
+  border: 1px solid rgba(91, 36, 28, .12);
+  border-radius: .5rem;
+  background: rgba(255, 248, 234, .86);
+  padding: .75rem .85rem;
+  color: var(--title-color);
+  outline: 0;
+  cursor: text;
+}
+
+.assistant__form input:focus {
+  border-color: rgba(200, 154, 47, .72);
+  box-shadow: 0 0 0 3px rgba(247, 208, 70, .16);
+}
+
+.assistant__form button {
+  display: grid;
+  place-items: center;
+  border-radius: .5rem;
+  background: var(--flag-red);
+  color: #fff8ea;
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.assistant__form button:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.assistant__form button:disabled {
+  opacity: .45;
+}
+
+.assistant__form button svg {
+  width: 1rem;
+}
+
+@keyframes assistant-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes assistant-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (min-width: 760px) {
   .nav__toggle {
     display: none;
@@ -1557,6 +1799,19 @@ button {
   .contact__email,
   .contact__info a {
     overflow-wrap: anywhere;
+  }
+
+  .assistant {
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .assistant__panel {
+    position: fixed;
+    inset: auto 1rem 5rem 1rem;
+    width: auto;
+    max-height: min(38rem, calc(100vh - 6rem));
+    transform-origin: bottom center;
   }
 }
 

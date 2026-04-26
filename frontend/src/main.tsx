@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { BriefcaseBusiness, Code, Copy, ExternalLink, Menu, Palette, X } from "lucide-react";
+import { Bot, BriefcaseBusiness, Code, Copy, ExternalLink, Loader2, Menu, MessageCircle, Palette, Send, X } from "lucide-react";
 import "./styles.css";
 
 const navItems = [
@@ -94,6 +94,13 @@ const skillRows = [
   ["YOLOv8", "DeepSORT", "UNet", "OpenCV", "CUDA", "Roboflow", "CVAT", "Data Annotation"],
   ["Post-Processing", "Models & Algorithms", "Microsoft Excel", "Project Management", "Team Collaboration", "Problem Solving", "Communication"]
 ];
+
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+
+type ChatMessage = {
+  role: "assistant" | "user";
+  content: string;
+};
 
 function useActiveSection() {
   const [active, setActive] = useState("home");
@@ -540,6 +547,124 @@ function Contact() {
   );
 }
 
+function AiAssistant() {
+  const [open, setOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content: "Hi, I'm Tony's AI assistant. Ask me about his experience, projects, skills, or contact details."
+    }
+  ]);
+  const messagesRef = useRef<HTMLDivElement>(null);
+
+  const suggestedQuestions = [
+    "What AI experience does Tony have?",
+    "Tell me about Tony's projects",
+    "What skills does Tony use?",
+    "How can I contact Tony?"
+  ];
+
+  useEffect(() => {
+    messagesRef.current?.scrollTo({ top: messagesRef.current.scrollHeight, behavior: "smooth" });
+  }, [messages, loading]);
+
+  const sendMessage = async (message: string) => {
+    const clean = message.trim();
+    if (!clean || loading) return;
+
+    setMessages((current) => [...current, { role: "user", content: clean }]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: clean })
+      });
+
+      if (!response.ok) throw new Error("The assistant is not available right now.");
+
+      const data: { answer: string; used_llm_fallback?: boolean } = await response.json();
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: data.answer
+        }
+      ]);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: "I can't reach Tony's assistant service yet. Please make sure the FastAPI backend and vLLM server are running, then try again."
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <aside className={`assistant ${open ? "is-open" : ""}`} aria-label="Tony Hoang AI assistant">
+      <button className="assistant__toggle" type="button" aria-label={open ? "Close AI assistant" : "Open AI assistant"} onClick={() => setOpen((value) => !value)}>
+        {open ? <X /> : <MessageCircle />}
+      </button>
+
+      <div className="assistant__panel">
+        <div className="assistant__header">
+          <div>
+            <span className="assistant__badge">
+              <Bot /> RAG Assistant
+            </span>
+            <h2>Ask About Tony</h2>
+          </div>
+          <button type="button" aria-label="Close AI assistant" onClick={() => setOpen(false)}>
+            <X />
+          </button>
+        </div>
+
+        <div className="assistant__messages" ref={messagesRef}>
+          {messages.map((message, index) => (
+            <div className={`assistant__message assistant__message--${message.role}`} key={`${message.role}-${index}-${message.content.slice(0, 12)}`}>
+              {message.content}
+            </div>
+          ))}
+          {loading && (
+            <div className="assistant__message assistant__message--assistant assistant__message--loading">
+              <Loader2 /> Thinking with Tony's knowledge base...
+            </div>
+          )}
+        </div>
+
+        <div className="assistant__suggestions" aria-label="Suggested questions">
+          {suggestedQuestions.map((question) => (
+            <button type="button" key={question} onClick={() => sendMessage(question)}>
+              {question}
+            </button>
+          ))}
+        </div>
+
+        <form
+          className="assistant__form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            sendMessage(input);
+          }}
+        >
+          <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask anything about Tony..." maxLength={1200} />
+          <button type="submit" aria-label="Send message" disabled={loading || !input.trim()}>
+            <Send />
+          </button>
+        </form>
+      </div>
+    </aside>
+  );
+}
+
 function Footer() {
   return (
     <footer className="footer">
@@ -567,6 +692,7 @@ function App() {
         <Services />
         <Contact />
       </main>
+      <AiAssistant />
       <Footer />
     </>
   );
