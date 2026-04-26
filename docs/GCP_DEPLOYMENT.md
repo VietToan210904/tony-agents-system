@@ -99,9 +99,9 @@ gcloud secrets create portfolio-admin-token --replication-policy=automatic
 Add secret versions:
 
 ```powershell
-Set-Content -Path .tmp_database_url.txt -Value "REPLACE_WITH_DATABASE_URL"
-Set-Content -Path .tmp_openai_key.txt -Value "REPLACE_WITH_OPENAI_API_KEY"
-Set-Content -Path .tmp_admin_token.txt -Value "REPLACE_WITH_LONG_RANDOM_ADMIN_TOKEN"
+Set-Content -Path .tmp_database_url.txt -Value "REPLACE_WITH_DATABASE_URL" -NoNewline
+Set-Content -Path .tmp_openai_key.txt -Value "REPLACE_WITH_OPENAI_API_KEY" -NoNewline
+Set-Content -Path .tmp_admin_token.txt -Value "REPLACE_WITH_LONG_RANDOM_ADMIN_TOKEN" -NoNewline
 
 gcloud secrets versions add portfolio-database-url --data-file=.tmp_database_url.txt
 gcloud secrets versions add portfolio-openai-api-key --data-file=.tmp_openai_key.txt
