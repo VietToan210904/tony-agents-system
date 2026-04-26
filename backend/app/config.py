@@ -32,18 +32,22 @@ def default_embedding_dimensions() -> str:
     return "1024"
 
 
+def env_stripped(name: str, default: str = "") -> str:
+    return os.getenv(name, default).strip()
+
+
 @dataclass(frozen=True)
 class Settings:
-    database_url: str = os.getenv(
+    database_url: str = env_stripped(
         "DATABASE_URL",
         "postgresql://postgres:postgres@localhost:5432/tony_portfolio",
     )
     chat_provider: str = os.getenv("CHAT_PROVIDER", "openai_compatible").lower()
-    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
-    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    chat_base_url: str = os.getenv("CHAT_BASE_URL", os.getenv("VLLM_BASE_URL", "http://localhost:11434/v1"))
-    chat_api_key: str = os.getenv("CHAT_API_KEY", os.getenv("VLLM_API_KEY", "ollama"))
-    chat_model: str = os.getenv("CHAT_MODEL", os.getenv("VLLM_MODEL", default_chat_model()))
+    openai_api_key: str = env_stripped("OPENAI_API_KEY")
+    openai_base_url: str = env_stripped("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    chat_base_url: str = env_stripped("CHAT_BASE_URL", env_stripped("VLLM_BASE_URL", "http://localhost:11434/v1"))
+    chat_api_key: str = env_stripped("CHAT_API_KEY", env_stripped("VLLM_API_KEY", "ollama"))
+    chat_model: str = env_stripped("CHAT_MODEL", env_stripped("VLLM_MODEL", default_chat_model()))
     cors_allow_origins: tuple[str, ...] = tuple(
         origin.strip()
         for origin in os.getenv(
@@ -52,11 +56,11 @@ class Settings:
         ).split(",")
         if origin.strip()
     )
-    admin_token: str = os.getenv("ADMIN_TOKEN", "")
+    admin_token: str = env_stripped("ADMIN_TOKEN")
     embedding_provider: str = os.getenv("EMBEDDING_PROVIDER", "openai")
-    embedding_base_url: str = os.getenv("EMBEDDING_BASE_URL", "http://localhost:8002/v1")
-    embedding_api_key: str = os.getenv("EMBEDDING_API_KEY") or os.getenv("OPENAI_API_KEY", "local-token")
-    embedding_model: str = os.getenv("EMBEDDING_MODEL", default_embedding_model())
+    embedding_base_url: str = env_stripped("EMBEDDING_BASE_URL", "http://localhost:8002/v1")
+    embedding_api_key: str = env_stripped("EMBEDDING_API_KEY") or env_stripped("OPENAI_API_KEY", "local-token")
+    embedding_model: str = env_stripped("EMBEDDING_MODEL", default_embedding_model())
     embedding_dimensions: int = int(os.getenv("EMBEDDING_DIMENSIONS", default_embedding_dimensions()))
     rag_top_k: int = int(os.getenv("RAG_TOP_K", "6"))
     allow_dev_fallback: bool = os.getenv("ALLOW_DEV_FALLBACK", "true").lower() == "true"
