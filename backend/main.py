@@ -1,4 +1,4 @@
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -6,6 +6,7 @@ from app.config import settings
 from app.rag.ingest import ingest_sources
 from app.rag.database import get_ingestion_summary, list_chunks
 from app.rag.service import answer_question
+from app.rate_limit import enforce_chat_rate_limit
 from app.schemas import ChatRequest, ChatResponse
 
 
@@ -76,5 +77,6 @@ def rag_summary() -> dict:
 
 
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> dict:
-    return await answer_question(request.message)
+async def chat(request: Request, chat_request: ChatRequest) -> dict:
+    enforce_chat_rate_limit(request)
+    return await answer_question(chat_request.message)

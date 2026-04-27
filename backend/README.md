@@ -22,5 +22,7 @@ The backend expects:
 - OpenAI embeddings by default with `text-embedding-3-small`
 - Optional local Qwen embeddings later with `Qwen/Qwen3-Embedding-0.6B`
 - PostgreSQL at `postgresql://postgres:postgres@localhost:5432/tony_portfolio`
+- Chat rate limiting through PostgreSQL with `RATE_LIMIT_ENABLED=true`,
+  `CHAT_RATE_LIMIT_PER_MINUTE=6`, and `CHAT_RATE_LIMIT_PER_HOUR=60`
 
 Copy `.env.example` if you want to change those defaults.

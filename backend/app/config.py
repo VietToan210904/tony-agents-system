@@ -64,6 +64,10 @@ class Settings:
     embedding_dimensions: int = int(os.getenv("EMBEDDING_DIMENSIONS", default_embedding_dimensions()))
     rag_top_k: int = int(os.getenv("RAG_TOP_K", "6"))
     allow_dev_fallback: bool = os.getenv("ALLOW_DEV_FALLBACK", "true").lower() == "true"
+    rate_limit_enabled: bool = os.getenv("RATE_LIMIT_ENABLED", "true").lower() == "true"
+    chat_rate_limit_per_minute: int = int(os.getenv("CHAT_RATE_LIMIT_PER_MINUTE", "6"))
+    chat_rate_limit_per_hour: int = int(os.getenv("CHAT_RATE_LIMIT_PER_HOUR", "60"))
+    rate_limit_salt: str = env_stripped("RATE_LIMIT_SALT", env_stripped("ADMIN_TOKEN", "portfolio-rate-limit-v1"))
 
 
 settings = Settings()

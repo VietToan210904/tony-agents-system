@@ -585,6 +585,10 @@ function AiAssistant() {
         body: JSON.stringify({ message: clean })
       });
 
+      if (response.status === 429) {
+        throw new Error("Too many requests. Please wait a moment and try again.");
+      }
+
       if (!response.ok) throw new Error("The assistant is not available right now.");
 
       const data: { answer: string; used_llm_fallback?: boolean } = await response.json();
@@ -595,12 +599,17 @@ function AiAssistant() {
           content: data.answer
         }
       ]);
-    } catch {
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message.includes("Too many requests")
+          ? "Too many requests. Please wait a moment and try again."
+          : "I can't reach Tony's assistant service yet. Please make sure the FastAPI backend and vLLM server are running, then try again.";
+
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          content: "I can't reach Tony's assistant service yet. Please make sure the FastAPI backend and vLLM server are running, then try again."
+          content: message
         }
       ]);
     } finally {

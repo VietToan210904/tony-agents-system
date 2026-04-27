@@ -58,6 +58,9 @@ jobs:
           EMBEDDING_DIMENSIONS: "1536"
           RAG_TOP_K: "6"
           ALLOW_DEV_FALLBACK: "false"
+          RATE_LIMIT_ENABLED: "true"
+          CHAT_RATE_LIMIT_PER_MINUTE: "6"
+          CHAT_RATE_LIMIT_PER_HOUR: "60"
           CORS_ALLOW_ORIGINS: "${PUBLIC_FRONTEND_ORIGINS}"
           EOF
 
@@ -116,7 +119,7 @@ jobs:
             --command python \
             --args scripts/ingest_rag.py \
             --update-secrets DATABASE_URL=portfolio-database-url:latest,OPENAI_API_KEY=portfolio-openai-api-key:latest,ADMIN_TOKEN=portfolio-admin-token:latest \
-            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false \
+            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false,RATE_LIMIT_ENABLED=true,CHAT_RATE_LIMIT_PER_MINUTE=6,CHAT_RATE_LIMIT_PER_HOUR=60 \
             --quiet
 
           gcloud run jobs execute "${INGEST_JOB}" --region "${REGION}" --wait

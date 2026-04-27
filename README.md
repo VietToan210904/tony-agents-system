@@ -60,6 +60,8 @@ uvicorn main:app --reload
 
 The personal knowledge files live in `backend/rag_sources`. Update those files and rerun ingestion whenever Tony's CV, projects, skills, contact information, or embedding model changes.
 
+The chat API is rate limited by default to protect OpenAI API usage. Configure it with `RATE_LIMIT_ENABLED`, `CHAT_RATE_LIMIT_PER_MINUTE`, and `CHAT_RATE_LIMIT_PER_HOUR`.
+
 ## GCP Deployment
 
 The GCP staging deployment runbook is in `docs/GCP_DEPLOYMENT.md`.
