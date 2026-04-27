@@ -103,13 +103,6 @@ jobs:
           FRONTEND_URL="$(gcloud run services describe "${FRONTEND_SERVICE}" --region "${REGION}" --format='value(status.url)')"
           echo "FRONTEND_URL=${FRONTEND_URL}" >> "$GITHUB_ENV"
 
-      - name: Update backend CORS for frontend URL
-        run: |
-          gcloud run services update "${BACKEND_SERVICE}" \
-            --region "${REGION}" \
-            --update-env-vars CORS_ALLOW_ORIGINS="${PUBLIC_FRONTEND_ORIGINS},${FRONTEND_URL}" \
-            --quiet
-
       - name: Deploy RAG ingestion job
         run: |
           gcloud run jobs deploy "${INGEST_JOB}" \
