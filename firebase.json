@@ -1,0 +1,19 @@
+{
+  "hosting": {
+    "public": "firebase-public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "portfolio-frontend-staging",
+          "region": "australia-southeast1"
+        }
+      }
+    ]
+  }
+}

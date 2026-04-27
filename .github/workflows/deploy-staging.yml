@@ -15,6 +15,7 @@ env:
   INGEST_JOB: ${{ vars.GCP_INGEST_JOB || 'portfolio-rag-ingest-staging' }}
   RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
   CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE }}
+  PUBLIC_FRONTEND_ORIGINS: https://portfolio-frontend-staging-5pm5otntma-ts.a.run.app,https://tony-portfolio-prod.web.app,https://tonyhoang.space,https://www.tonyhoang.space
 
 jobs:
   deploy:
@@ -60,7 +61,7 @@ jobs:
             --timeout 300 \
             --min-instances 0 \
             --update-secrets DATABASE_URL=portfolio-database-url:latest,OPENAI_API_KEY=portfolio-openai-api-key:latest,ADMIN_TOKEN=portfolio-admin-token:latest \
-            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false,CORS_ALLOW_ORIGINS=http://localhost:5173 \
+            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false,CORS_ALLOW_ORIGINS="${PUBLIC_FRONTEND_ORIGINS}" \
             --quiet
 
           BACKEND_URL="$(gcloud run services describe "${BACKEND_SERVICE}" --region "${REGION}" --format='value(status.url)')"
@@ -94,7 +95,7 @@ jobs:
         run: |
           gcloud run services update "${BACKEND_SERVICE}" \
             --region "${REGION}" \
-            --update-env-vars CORS_ALLOW_ORIGINS="${FRONTEND_URL}" \
+            --update-env-vars CORS_ALLOW_ORIGINS="${PUBLIC_FRONTEND_ORIGINS},${FRONTEND_URL}" \
             --quiet
 
       - name: Deploy RAG ingestion job

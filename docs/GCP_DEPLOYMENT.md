@@ -257,3 +257,46 @@ Successful production RAG should show:
 "used_retrieval_fallback": false,
 "used_llm_fallback": false
 ```
+
+## Custom Domain With Firebase Hosting
+
+This project includes `firebase.json` to connect Firebase Hosting to the Cloud Run frontend service.
+
+Enable Firebase/Hosting APIs:
+
+```powershell
+gcloud services enable firebase.googleapis.com
+gcloud services enable firebasehosting.googleapis.com
+```
+
+Install Firebase CLI if needed:
+
+```powershell
+npm install -g firebase-tools
+firebase login
+```
+
+Deploy the Hosting rewrite:
+
+```powershell
+firebase deploy --only hosting --project tony-portfolio-prod
+```
+
+Then open Firebase Hosting in the console and add your custom domain:
+
+```text
+Firebase Console -> tony-portfolio-prod -> Hosting -> Add custom domain
+```
+
+Add both:
+
+```text
+tonyhoang.space
+www.tonyhoang.space
+```
+
+Firebase will show DNS records. Add those records in Namecheap under:
+
+```text
+Domain List -> tonyhoang.space -> Manage -> Advanced DNS
+```
