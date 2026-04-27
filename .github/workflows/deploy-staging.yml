@@ -49,6 +49,18 @@ jobs:
 
       - name: Deploy backend
         run: |
+          cat > backend-env.yaml <<EOF
+          CHAT_PROVIDER: openai
+          CHAT_MODEL: gpt-5.4-mini
+          OPENAI_BASE_URL: https://api.openai.com/v1
+          EMBEDDING_PROVIDER: openai
+          EMBEDDING_MODEL: text-embedding-3-small
+          EMBEDDING_DIMENSIONS: "1536"
+          RAG_TOP_K: "6"
+          ALLOW_DEV_FALLBACK: "false"
+          CORS_ALLOW_ORIGINS: "${PUBLIC_FRONTEND_ORIGINS}"
+          EOF
+
           gcloud run deploy "${BACKEND_SERVICE}" \
             --image "${BACKEND_IMAGE}" \
             --region "${REGION}" \
@@ -61,7 +73,7 @@ jobs:
             --timeout 300 \
             --min-instances 0 \
             --update-secrets DATABASE_URL=portfolio-database-url:latest,OPENAI_API_KEY=portfolio-openai-api-key:latest,ADMIN_TOKEN=portfolio-admin-token:latest \
-            --set-env-vars CHAT_PROVIDER=openai,CHAT_MODEL=gpt-5.4-mini,OPENAI_BASE_URL=https://api.openai.com/v1,EMBEDDING_PROVIDER=openai,EMBEDDING_MODEL=text-embedding-3-small,EMBEDDING_DIMENSIONS=1536,RAG_TOP_K=6,ALLOW_DEV_FALLBACK=false,CORS_ALLOW_ORIGINS="${PUBLIC_FRONTEND_ORIGINS}" \
+            --env-vars-file backend-env.yaml \
             --quiet
 
           BACKEND_URL="$(gcloud run services describe "${BACKEND_SERVICE}" --region "${REGION}" --format='value(status.url)')"
