@@ -1,4 +1,4 @@
-# Portfolio Full Stack App
+# Portfolio Full Stack App with AI Agents integrated
 
 React + TypeScript + Tailwind CSS frontend with a FastAPI backend and a local RAG assistant.
 
