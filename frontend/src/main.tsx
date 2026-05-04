@@ -95,7 +95,25 @@ const skillRows = [
   ["Post-Processing", "Models & Algorithms", "Microsoft Excel", "Project Management", "Team Collaboration", "Problem Solving", "Communication"]
 ];
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const sameOriginApiHostsValue = (
+  import.meta.env.VITE_SAME_ORIGIN_API_HOSTS ??
+  "tonyhoang.space,www.tonyhoang.space,tony-portfolio-prod.web.app,tony-portfolio-prod.firebaseapp.com"
+) as string;
+
+const sameOriginApiHosts = sameOriginApiHostsValue
+  .split(",")
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean);
+
+const resolveApiBaseUrl = () => {
+  const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+  const currentHost = window.location.hostname.toLowerCase();
+  const shouldUseSameOriginApi = import.meta.env.DEV || sameOriginApiHosts.includes(currentHost);
+
+  return shouldUseSameOriginApi ? "" : configuredApiBaseUrl.replace(/\/$/, "");
+};
+
+const apiBaseUrl = resolveApiBaseUrl();
 
 type ChatMessage = {
   role: "assistant" | "user";

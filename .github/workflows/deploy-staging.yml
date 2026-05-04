@@ -16,6 +16,7 @@ env:
   RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
   CLOUD_SQL_INSTANCE: ${{ vars.GCP_CLOUD_SQL_INSTANCE }}
   PUBLIC_FRONTEND_ORIGINS: https://portfolio-frontend-staging-5pm5otntma-ts.a.run.app,https://tony-portfolio-prod.web.app,https://tonyhoang.space,https://www.tonyhoang.space
+  SAME_ORIGIN_API_HOSTS: tonyhoang.space,www.tonyhoang.space,tony-portfolio-prod.web.app,tony-portfolio-prod.firebaseapp.com
 
 jobs:
   deploy:
@@ -85,7 +86,11 @@ jobs:
       - name: Build and push frontend image
         run: |
           FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/${FRONTEND_SERVICE}:${GITHUB_SHA}"
-          docker build --build-arg VITE_API_BASE_URL="${BACKEND_URL}" -t "${FRONTEND_IMAGE}" frontend
+          docker build \
+            --build-arg VITE_API_BASE_URL="${BACKEND_URL}" \
+            --build-arg VITE_SAME_ORIGIN_API_HOSTS="${SAME_ORIGIN_API_HOSTS}" \
+            -t "${FRONTEND_IMAGE}" \
+            frontend
           docker push "${FRONTEND_IMAGE}"
           echo "FRONTEND_IMAGE=${FRONTEND_IMAGE}" >> "$GITHUB_ENV"
 
