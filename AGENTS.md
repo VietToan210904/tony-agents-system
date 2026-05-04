@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This repository is a full-stack portfolio app. `frontend/` contains the Vite React TypeScript UI, with app code in `frontend/src/` and static assets in `frontend/public/`. `backend/` contains the FastAPI service: `backend/main.py` defines routes, `backend/app/` holds configuration, schemas, rate limiting, and RAG logic, and `backend/app/rag/` contains ingestion, retrieval, embeddings, and database access. RAG source documents live in `backend/rag_sources/`; update them before rerunning ingestion. Database setup is in `backend/db/schema.sql`. Deployment notes live in `docs/`, and GCP staging automation is in `.github/workflows/deploy-staging.yml`.
+This repository is a full-stack portfolio app. `frontend/` contains the Vite React TypeScript UI, with app code in `frontend/src/` and static assets in `frontend/public/`. `backend/` contains the FastAPI service: `backend/main.py` creates the app and includes API routers, `backend/app/api/` holds route modules and dependencies, `backend/app/` holds configuration, schemas, rate limiting, and RAG logic, and `backend/app/rag/` contains ingestion, retrieval, embeddings, and database access. RAG source documents live in `backend/rag_sources/`; update them before rerunning ingestion. Database setup is in `backend/db/schema.sql`. Deployment notes live in `docs/`, and GCP staging automation is in `.github/workflows/deploy-staging.yml`.
 
 ## Build, Test, and Development Commands
 

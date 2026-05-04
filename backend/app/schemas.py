@@ -18,3 +18,9 @@ class ChatResponse(BaseModel):
     sources: list[ChatSource]
     used_retrieval_fallback: bool = False
     used_llm_fallback: bool = False
+
+
+class Profile(BaseModel):
+    name: str
+    role: str
+    tagline: str
