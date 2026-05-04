@@ -4,7 +4,6 @@ import logging
 
 from app.rag.llm import generate_answer
 from app.rag.retriever import retrieve_context
-from backend.app.schemas import ChatResponse, ChatSource
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ def fallback_answer(question: str, chunks: list[dict]) -> str:
     )
 
 
-async def answer_question(question: str) -> ChatResponse:
+async def answer_question(question: str) -> dict:
     chunks, used_retrieval_fallback = await retrieve_context(question)
     context = build_context_block(chunks)
     messages = [
@@ -67,17 +66,17 @@ async def answer_question(question: str) -> ChatResponse:
         logger.exception("Chat model request failed; using fallback answer: %s", exc)
         answer = fallback_answer(question, chunks)
         used_llm_fallback = True
-        
-    return ChatResponse(
-        answer=answer,
-        sources=[
-            ChatSource(
-                source=chunk.get("source_name") or "",
-                score=round(float(chunk.get("score", 0)), 4),
-                preview=chunk.get("chunk_text", "")[:220],
-            )
+
+    return {
+        "answer": answer,
+        "sources": [
+            {
+                "source": chunk.get("source_name"),
+                "score": round(float(chunk.get("score", 0)), 4),
+                "preview": chunk.get("chunk_text", "")[:220],
+            }
             for chunk in chunks
         ],
-        used_retrieval_fallback=used_retrieval_fallback,
-        used_llm_fallback=used_llm_fallback,
-    )
+        "used_retrieval_fallback": used_retrieval_fallback,
+        "used_llm_fallback": used_llm_fallback,
+    }
