@@ -5,10 +5,9 @@ from collections import Counter
 from typing import Any
 
 from app.config import settings
-from app.rag.chunking import chunk_text
 from app.rag.database import search_chunks
 from app.rag.embeddings import embed_texts
-from app.rag.ingest import load_source_documents
+from app.rag.ingest import build_source_chunks, load_source_documents
 
 TOKEN_PATTERN = re.compile(r"[a-zA-Z0-9+#.\-]+")
 
@@ -21,8 +20,8 @@ def _fallback_search(question: str, limit: int) -> list[dict[str, Any]]:
     query_tokens = _tokens(question)
     candidates: list[dict[str, Any]] = []
 
-    for source_name, source_type, content in load_source_documents():
-        for index, chunk in enumerate(chunk_text(content)):
+    for document in load_source_documents():
+        for chunk, metadata in build_source_chunks(document):
             chunk_tokens = _tokens(chunk)
             overlap = query_tokens & chunk_tokens
             score = len(overlap) / max(len(query_tokens), 1)
@@ -30,9 +29,9 @@ def _fallback_search(question: str, limit: int) -> list[dict[str, Any]]:
                 candidates.append(
                     {
                         "chunk_text": chunk,
-                        "metadata": {"source": source_name, "chunk_index": index},
-                        "source_name": source_name,
-                        "source_type": source_type,
+                        "metadata": metadata,
+                        "source_name": document.source_name,
+                        "source_type": document.source_type,
                         "score": score,
                     }
                 )
@@ -41,13 +40,13 @@ def _fallback_search(question: str, limit: int) -> list[dict[str, Any]]:
         all_chunks = [
             {
                 "chunk_text": chunk,
-                "metadata": {"source": source_name, "chunk_index": index},
-                "source_name": source_name,
-                "source_type": source_type,
+                "metadata": metadata,
+                "source_name": document.source_name,
+                "source_type": document.source_type,
                 "score": 0.0,
             }
-            for source_name, source_type, content in load_source_documents()
-            for index, chunk in enumerate(chunk_text(content))
+            for document in load_source_documents()
+            for chunk, metadata in build_source_chunks(document)
         ]
         return all_chunks[:limit]
 
